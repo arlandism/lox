@@ -1,10 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"lox/lexer"
 )
 
 func main() {
-	s := lexer.NewScanner("Hola World!")
-	s.ReadTokens()
+	s := lexer.NewScanner("{}()*;/\\")
+	err := s.ReadTokens()
+	if err != nil {
+		fmt.Println(err)
+	}
 }

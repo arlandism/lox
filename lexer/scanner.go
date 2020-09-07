@@ -1,9 +1,27 @@
 package lexer
 
 import (
+	"bytes"
 	"fmt"
 	"unicode/utf8"
 )
+
+//TODO: just condense this into a special unknown token
+type UnrecognizedTokenError struct {
+	literal string
+	line    int
+}
+
+func NewUnrecognizedTokenError(literal string, line int) UnrecognizedTokenError {
+	return UnrecognizedTokenError{
+		literal,
+		line,
+	}
+}
+
+func (e UnrecognizedTokenError) Error() string {
+	return fmt.Sprintf("Unrecognized token: %s on line %d", e.literal, e.line)
+}
 
 type Scanner struct {
 	current int
@@ -17,16 +35,47 @@ func NewScanner(source string) *Scanner {
 	}
 }
 
-func (s *Scanner) ReadTokens() {
+func (s *Scanner) ReadTokens() error {
 	for s.current < len(s.source) {
-		token := s.readNextToken()
+		token, err := s.readNextToken()
+		if err != nil {
+			return err
+		}
 		fmt.Printf("%s\n", token)
 	}
+	return nil
 }
 
-func (s *Scanner) readNextToken() Token {
+func (s *Scanner) readNextToken() (Token, error) {
+	var token bytes.Buffer
 	r := s.advance()
-	return NewToken(string(r))
+	token.WriteRune(r)
+	switch r {
+	case '(':
+		return NewToken(LEFT_PAREN, token.String()), nil
+	case ')':
+		return NewToken(RIGHT_PAREN, token.String()), nil
+	case '{':
+		return NewToken(LEFT_BRACE, token.String()), nil
+	case '}':
+		return NewToken(RIGHT_BRACE, token.String()), nil
+	case ',':
+		return NewToken(COMMA, token.String()), nil
+	case '.':
+		return NewToken(DOT, token.String()), nil
+	case '-':
+		return NewToken(MINUS, token.String()), nil
+	case '+':
+		return NewToken(PLUS, token.String()), nil
+	case ';':
+		return NewToken(SEMICOLON, token.String()), nil
+	case '/':
+		return NewToken(SLASH, token.String()), nil
+	case '*':
+		return NewToken(STAR, token.String()), nil
+	default:
+		return NewToken(UNKNOWN, token.String()), NewUnrecognizedTokenError(token.String(), 1)
+	}
 }
 
 // Iterating through a string returns raw byte values

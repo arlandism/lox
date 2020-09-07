@@ -1,18 +1,62 @@
 package lexer
 
-// 1 + 2
-// 1 * 2
-// 3 / 4
-// 5 * 7
+import "fmt"
+
+const (
+	UNKNOWN = iota
+	LEFT_PAREN
+	RIGHT_PAREN
+	LEFT_BRACE
+	RIGHT_BRACE
+	COMMA
+	DOT
+	MINUS
+	PLUS
+	SEMICOLON
+	SLASH
+	STAR
+
+	BANG
+	BANG_EQUAL
+	EQUAL
+	EQUAL_EQUAL
+	GREATER
+	GREATER_EQUAL
+	LESS
+	LESS_EQUAL
+
+	IDENTIFIER
+	STRING
+	NUMBER
+
+	AND
+	CLASS
+	ELSE
+	FALSE
+	FUN
+	FOR
+	IF
+	NIL
+	OR
+	PRINT
+	RETURN
+	SUPER
+	THIS
+	VAR
+	WHILE
+
+	EOF
+)
 
 type Token struct {
-	literal string
+	tokenType int
+	literal   string
 }
 
-func NewToken(literal string) Token {
-	return Token{literal}
+func NewToken(tokenType int, literal string) Token {
+	return Token{tokenType, literal}
 }
 
 func (t Token) String() string {
-	return t.literal
+	return fmt.Sprintf("Token literal: %s\n", t.literal)
 }
