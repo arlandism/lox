@@ -56,7 +56,7 @@ WhitespaceLoop:
 	for { // handle pass-through and whitespace tokens
 		switch r {
 		case '\n':
-			s.line += 1
+			s.line += 1 // for error reporting
 		case '\t':
 		case ' ':
 		default:
@@ -92,6 +92,38 @@ WhitespaceLoop:
 		return NewToken(SLASH, token.String()), nil
 	case '*':
 		return NewToken(STAR, token.String()), nil
+	case '!':
+		if s.peekNext() == '=' {
+			next := s.advance()
+			token.WriteRune(next)
+			return NewToken(BANG_EQUAL, token.String()), nil
+		} else {
+			return NewToken(BANG, token.String()), nil
+		}
+	case '=':
+		if s.peekNext() == '=' {
+			next := s.advance()
+			token.WriteRune(next)
+			return NewToken(EQUAL_EQUAL, token.String()), nil
+		} else {
+			return NewToken(EQUAL, token.String()), nil
+		}
+	case '>':
+		if s.peekNext() == '=' {
+			next := s.advance()
+			token.WriteRune(next)
+			return NewToken(GREATER_EQUAL, token.String()), nil
+		} else {
+			return NewToken(GREATER, token.String()), nil
+		}
+	case '<':
+		if s.peekNext() == '=' {
+			next := s.advance()
+			token.WriteRune(next)
+			return NewToken(LESS_EQUAL, token.String()), nil
+		} else {
+			return NewToken(LESS, token.String()), nil
+		}
 	default:
 		return NewToken(UNKNOWN, token.String()), NewUnrecognizedTokenError(token.String(), s.line)
 	}
@@ -105,5 +137,11 @@ WhitespaceLoop:
 func (s *Scanner) advance() rune {
 	r, width := utf8.DecodeRuneInString(s.source[s.current:])
 	s.current += width
+	return r
+}
+
+// Similar to advance but doesn't actually consume the next token
+func (s *Scanner) peekNext() rune {
+	r, _ := utf8.DecodeRuneInString(s.source[s.current:])
 	return r
 }
