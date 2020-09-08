@@ -20,18 +20,20 @@ func NewUnrecognizedTokenError(literal string, line int) UnrecognizedTokenError 
 }
 
 func (e UnrecognizedTokenError) Error() string {
-	return fmt.Sprintf("Unrecognized token: %s on line %d", e.literal, e.line)
+	return fmt.Sprintf("LoxSyntaxError: Unrecognized token: %s on line %d", e.literal, e.line)
 }
 
 type Scanner struct {
 	current int
 	source  string
+	line    int
 }
 
 func NewScanner(source string) *Scanner {
 	return &Scanner{
 		0,
 		source,
+		1,
 	}
 }
 
@@ -49,8 +51,25 @@ func (s *Scanner) ReadTokens() error {
 func (s *Scanner) readNextToken() (Token, error) {
 	var token bytes.Buffer
 	r := s.advance()
+
+WhitespaceLoop:
+	for { // handle pass-through and whitespace tokens
+		switch r {
+		case '\n':
+			s.line += 1
+		case '\t':
+		case ' ':
+		default:
+			break WhitespaceLoop
+		}
+		r = s.advance()
+	}
+
 	token.WriteRune(r)
 	switch r {
+	case '\n':
+		s.line += 1
+		return NewToken(UNKNOWN, token.String()), nil
 	case '(':
 		return NewToken(LEFT_PAREN, token.String()), nil
 	case ')':
@@ -74,7 +93,7 @@ func (s *Scanner) readNextToken() (Token, error) {
 	case '*':
 		return NewToken(STAR, token.String()), nil
 	default:
-		return NewToken(UNKNOWN, token.String()), NewUnrecognizedTokenError(token.String(), 1)
+		return NewToken(UNKNOWN, token.String()), NewUnrecognizedTokenError(token.String(), s.line)
 	}
 }
 
