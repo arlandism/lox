@@ -43,6 +43,9 @@ func (s *Scanner) ReadTokens() error {
 		if err != nil {
 			return err
 		}
+		if token.tokenType == EOF {
+			break
+		}
 		fmt.Printf("%s\n", token)
 	}
 	return nil
@@ -124,6 +127,8 @@ WhitespaceLoop:
 		} else {
 			return NewToken(LESS, token.String()), nil
 		}
+	case utf8.RuneError:
+		return NewToken(EOF, ""), nil
 	default:
 		return NewToken(UNKNOWN, token.String()), NewUnrecognizedTokenError(token.String(), s.line)
 	}
@@ -134,9 +139,16 @@ WhitespaceLoop:
 // lib to grab the next Unicode code point and the byte-width
 // of that code point, incrementing the 'current' index pointer
 // by the byte-width.
+
+// Returns the rune and the number of bytes written
+// RuneError, 0 is a special code meaning we've reached EOF
+// RuneError, 1 is a special code meaning the encoding is invalid
 func (s *Scanner) advance() rune {
 	r, width := utf8.DecodeRuneInString(s.source[s.current:])
-	s.current += width
+	if r != utf8.RuneError {
+		// no need to advance the pointer for errors
+		s.current += width
+	}
 	return r
 }
 
