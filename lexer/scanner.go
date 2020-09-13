@@ -92,7 +92,15 @@ WhitespaceLoop:
 	case ';':
 		return NewToken(SEMICOLON, token.String()), nil
 	case '/':
-		return NewToken(SLASH, token.String()), nil
+		if s.peekNext() == '/' {
+			// this doesn't consume the newline rune
+			// because we want that token to be handled by the
+			// main scanning loop
+			s.advanceStreamTo('\n')
+			return s.readNextToken()
+		} else {
+			return NewToken(SLASH, token.String()), nil
+		}
 	case '*':
 		return NewToken(STAR, token.String()), nil
 	case '!':
@@ -131,6 +139,22 @@ WhitespaceLoop:
 		return NewToken(EOF, ""), nil
 	default:
 		return NewToken(UNKNOWN, token.String()), NewUnrecognizedTokenError(token.String(), s.line)
+	}
+}
+
+// Consumes all tokens up to but not including the targetRune
+func (s *Scanner) advanceStreamTo(targetRune rune) {
+	if s.peekNext() == targetRune {
+		return
+	} else if s.peekNext() == utf8.RuneError {
+		// this usually signals EOF so
+		// let RuneError bubble up in the main scanning loop
+		// where that case is handled
+		// handling invalid encoding is a TODO
+		return
+	} else {
+		s.advance()
+		s.advanceStreamTo(targetRune)
 	}
 }
 
